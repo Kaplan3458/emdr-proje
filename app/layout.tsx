@@ -24,8 +24,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      {/* Aşağıdaki suppressHydrationWarning={true} satırı, 
+        tarayıcı eklentilerinin (Grammarly, Google Çeviri vb.) 
+        sebep olduğu konsol hatalarını görmezden gelmesini sağlar.
+      */}
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        suppressHydrationWarning={true}
       >
         {children}
       </body>
