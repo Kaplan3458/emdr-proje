@@ -20,12 +20,17 @@ export default function TerapistPaneli() {
   const [odaKodu, setOdaKodu] = useState(null);
   const [mesaj, setMesaj] = useState("");
   const [saniye, setSaniye] = useState(0);
-  
-  // ARKA PLAN STATE
   const [arkaPlan, setArkaPlan] = useState("black"); 
 
   const [danisanAdi, setDanisanAdi] = useState("");
   const [notlar, setNotlar] = useState("");
+
+  // ÖNİZLEME İÇİN GEREKLİ HESAPLAMALAR
+  const baseSure = Math.max(0.3, 4 - (hiz * 0.18));
+  const renkKodlari = { cyan: '#22d3ee', red: '#ef4444', green: '#22c55e', yellow: '#eab308', '#ec4899': '#ec4899' };
+  const secilenRenk = renkKodlari[renk] || renk;
+  const bgColors = { black: '#000000', gray: '#374151', blue: '#172554', beige: '#f5f5dc' };
+  const currentBg = bgColors[arkaPlan] || '#000000';
 
   useEffect(() => {
     const abonelik = onAuthStateChanged(auth, (user) => {
@@ -112,7 +117,6 @@ export default function TerapistPaneli() {
             {girisHata && <p className="text-red-500 text-sm text-center font-bold">{girisHata}</p>}
             <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-colors shadow-lg">GİRİŞ YAP</button>
           </form>
-          {/* --- DETAYLI YASAL UYARI --- */}
           <div className="mt-8 pt-4 border-t border-slate-100 text-[10px] text-slate-400 text-justify leading-tight">
             <strong>YASAL UYARI:</strong> Bu yazılım (EMDR Online), yalnızca terapi sürecini desteklemek amacıyla geliştirilmiş bir görsel/işitsel uyaran aracıdır. Tıbbi bir cihaz değildir ve tek başına tedavi edici özelliği yoktur. Seansın yönetimi, süresi ve uygunluğu konusundaki tüm klinik sorumluluk, sistemi kullanan uzman terapiste aittir. Sistem herhangi bir görüntü veya ses kaydı tutmamaktadır.
           </div>
@@ -133,11 +137,56 @@ export default function TerapistPaneli() {
         </div>
 
         <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-md">
+          {/* ÜST BİLGİ */}
           <div className="flex justify-between items-center mb-4 border-b pb-4">
             <div className={`px-4 py-1 rounded font-bold text-sm ${aktif ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{aktif ? "AKTİF" : "DURDU"}</div>
             <div className="text-xl font-mono font-bold text-slate-700">⏱️ {formatSure(saniye)}</div>
             <button onClick={() => setSaniye(0)} className="text-xs text-gray-400 underline">Sıfırla</button>
           </div>
+
+          {/* --- CANLI ÖNİZLEME KUTUSU (YENİ) --- */}
+          <div className="mb-6">
+            <label className="block text-xs font-bold text-slate-500 mb-2">CANLI ÖNİZLEME (DANIŞAN EKRANI)</label>
+            <div className="w-full h-32 rounded-lg border-4 border-slate-300 overflow-hidden relative shadow-inner" style={{ backgroundColor: currentBg }}>
+               {/* 1. YATAY (PREVIEW) */}
+               {mod === 'top' && (
+                 <div className="w-full h-full flex items-center relative">
+                   <div className="absolute w-6 h-6 rounded-full shadow-lg" style={{ backgroundColor: secilenRenk, animation: aktif ? `gitGelPreview ${baseSure}s linear infinite alternate` : 'none', left: '2%' }}></div>
+                 </div>
+               )}
+               {/* 2. IŞIK (PREVIEW) */}
+               {mod === 'isik' && (
+                  <div className="w-full h-full flex justify-between items-center px-6">
+                    <div className="w-12 h-12 rounded-full opacity-30" style={{ backgroundColor: secilenRenk, animation: aktif ? `yanSonPreview ${baseSure * 2}s linear infinite` : 'none' }}></div>
+                    <div className="w-12 h-12 rounded-full opacity-30" style={{ backgroundColor: secilenRenk, animation: aktif ? `yanSonPreview ${baseSure * 2}s linear infinite` : 'none', animationDelay: `${baseSure}s` }}></div>
+                  </div>
+               )}
+               {/* 3. ÇAPRAZ (PREVIEW) */}
+               {mod === 'capraz' && (
+                 <div className="w-full h-full relative">
+                    <div className="absolute w-6 h-6 rounded-full shadow-lg" style={{ backgroundColor: secilenRenk, animation: aktif ? `caprazXPreview ${baseSure}s linear infinite alternate, caprazYPreview ${baseSure}s linear infinite alternate` : 'none' }}></div>
+                 </div>
+               )}
+               {/* 4. SONSUZLUK (PREVIEW) */}
+               {mod === 'sekiz' && (
+                 <div className="w-full h-full relative flex items-center">
+                    <div className="absolute w-6 h-6" style={{ animation: aktif ? `gitGelPreview ${baseSure}s linear infinite alternate` : 'none' }}>
+                      <div className="w-full h-full rounded-full" style={{ backgroundColor: secilenRenk, animation: aktif ? `sekizYPreview ${baseSure}s ease-in-out infinite` : 'none' }}></div>
+                    </div>
+                 </div>
+               )}
+            </div>
+            {/* Önizleme Animasyonları (CSS) */}
+            <style jsx>{`
+              @keyframes gitGelPreview { from { left: 2%; transform: translateX(0); } to { left: 98%; transform: translateX(-100%); } }
+              @keyframes yanSonPreview { 0% { opacity: 0.2; transform: scale(1); } 10% { opacity: 1; transform: scale(1.1); } 20% { opacity: 0.2; transform: scale(1); } 100% { opacity: 0.2; } }
+              @keyframes caprazXPreview { from { left: 2%; } to { left: 98%; transform: translateX(-100%); } }
+              @keyframes caprazYPreview { from { top: 2%; } to { top: 98%; transform: translateY(-100%); } }
+              @keyframes sekizYPreview { 0% { transform: translateY(0); } 25% { transform: translateY(-40px); } 50% { transform: translateY(0); } 75% { transform: translateY(40px); } 100% { transform: translateY(0); } } 
+            `}</style>
+          </div>
+          {/* ------------------------------------- */}
+
           <div className="grid grid-cols-3 gap-2 mb-6">
             <button onClick={() => hazirModUygula('travma')} className="bg-red-50 text-red-600 text-xs font-bold py-2 rounded border border-red-200 hover:bg-red-100">⚡ Travma</button>
             <button onClick={() => hazirModUygula('rahat')} className="bg-green-50 text-green-600 text-xs font-bold py-2 rounded border border-green-200 hover:bg-green-100">🌿 Rahatlama</button>
